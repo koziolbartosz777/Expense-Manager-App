@@ -9,20 +9,21 @@ const NAV_ITEMS = [
 ]
 
 /**
- * Dolna nawigacja – widoczna tylko na urządzeniach mobilnych.
+ * Dolna nawigacja – widoczna tylko na mobile (md:hidden).
  * Przycisk "Dodaj" jest wyśrodkowany i wyróżniony.
  */
 export default function BottomNav() {
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-50 md:hidden bg-white border-t border-gray-200 safe-area-bottom">
+    <nav className="fixed bottom-0 left-0 right-0 z-50 md:hidden
+                    bg-white dark:bg-[#111111] border-t border-gray-200 dark:border-[#222222]
+                    safe-area-bottom">
       <div className="flex items-center justify-around h-16 px-2">
         {NAV_ITEMS.map((item) =>
           item.isAdd ? (
-            // Przycisk "Dodaj" – wyśrodkowany, większy, wyróżniony kolorem
             <NavLink
               key={item.to}
               to={item.to}
-              className="flex items-center justify-center -mt-6 w-14 h-14 
+              className="flex items-center justify-center -mt-6 w-14 h-14
                          bg-primary-500 text-white rounded-full shadow-lg shadow-primary-500/30
                          hover:bg-primary-700 active:scale-95 transition-all duration-200"
             >
@@ -34,7 +35,8 @@ export default function BottomNav() {
               to={item.to}
               end={item.to === '/'}
               className={({ isActive }) =>
-                `flex flex-col items-center justify-center gap-0.5 px-3 py-1 rounded-xl transition-colors duration-200
+                `flex flex-col items-center justify-center gap-0.5
+                 min-w-[44px] min-h-[44px] rounded-xl transition-colors duration-200
                  ${
                    isActive
                      ? 'text-primary-500'
