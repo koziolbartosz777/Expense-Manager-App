@@ -1,9 +1,10 @@
 import { Outlet } from 'react-router-dom'
 import Navbar from './Navbar'
 import BottomNav from './BottomNav'
+import Toast from '../ui/Toast'
 
 /**
- * Główny shell aplikacji – Navbar (góra/sidebar) + content + BottomNav (mobile).
+ * Główny shell aplikacji – Navbar (góra/sidebar) + content + BottomNav (mobile) + Toast.
  */
 export default function Shell() {
   return (
@@ -18,6 +19,7 @@ export default function Shell() {
       </main>
 
       <BottomNav />
+      <Toast />
     </div>
   )
 }

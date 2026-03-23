@@ -1,7 +1,12 @@
+import { useThemeStore } from '../store/useThemeStore'
+
 /**
  * Strona ustawień – konfiguracja aplikacji.
  */
 export default function SettingsPage() {
+  const theme = useThemeStore((s) => s.theme)
+  const toggleTheme = useThemeStore((s) => s.toggleTheme)
+
   return (
     <div className="space-y-6">
       <div>
@@ -9,10 +14,38 @@ export default function SettingsPage() {
         <p className="text-gray-500 mt-1">Konfiguracja aplikacji</p>
       </div>
 
-      {/* Waluta */}
-      <div className="card space-y-4">
+      {/* Ogólne */}
+      <div className="card space-y-5">
         <h2 className="section-title">Ogólne</h2>
 
+        {/* Motyw */}
+        <div>
+          <label className="label">Motyw</label>
+          <div className="flex gap-2">
+            <button
+              onClick={() => theme !== 'light' && toggleTheme()}
+              className={`flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium transition-all duration-200
+                ${theme === 'light'
+                  ? 'bg-primary-500 text-white shadow-sm'
+                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200 dark:bg-slate-700 dark:text-slate-300 dark:hover:bg-slate-600'
+                }`}
+            >
+              ☀️ Jasny
+            </button>
+            <button
+              onClick={() => theme !== 'dark' && toggleTheme()}
+              className={`flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium transition-all duration-200
+                ${theme === 'dark'
+                  ? 'bg-primary-500 text-white shadow-sm'
+                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200 dark:bg-slate-700 dark:text-slate-300 dark:hover:bg-slate-600'
+                }`}
+            >
+              🌙 Ciemny
+            </button>
+          </div>
+        </div>
+
+        {/* Waluta */}
         <div>
           <label htmlFor="currency" className="label">Waluta</label>
           <select id="currency" className="input" defaultValue="PLN">
@@ -40,9 +73,6 @@ export default function SettingsPage() {
       <div className="card">
         <h2 className="section-title mb-2">Informacje</h2>
         <p className="text-sm text-gray-500">Expense Manager v1.0.0</p>
-        <p className="text-sm text-gray-400 mt-1">
-          Zbudowane z ❤️ w React + Vite + Tailwind
-        </p>
       </div>
     </div>
   )

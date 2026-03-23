@@ -1,28 +1,47 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { DEFAULT_CATEGORIES } from '../store/useExpenseStore'
+import { useExpenseStore, DEFAULT_CATEGORIES } from '../store/useExpenseStore'
+import { parseAmount } from '../lib/utils'
 
-/**
- * Strona dodawania nowego wydatku.
- */
 export default function AddExpensePage() {
   const navigate = useNavigate()
+  const addExpense = useExpenseStore((s) => s.addExpense)
+  const isLoading = useExpenseStore((s) => s.isLoading)
+
   const [form, setForm] = useState({
     amount: '',
     category: DEFAULT_CATEGORIES[0],
     description: '',
     date: new Date().toISOString().split('T')[0],
   })
+  const [error, setError] = useState('')
 
   const handleChange = (e) => {
     setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }))
   }
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault()
-    // TODO: wywołanie addExpense z store
-    console.log('Nowy wydatek:', form)
-    navigate('/expenses')
+    setError('')
+
+    const amount = parseAmount(form.amount)
+    if (!amount || amount <= 0) {
+      setError('Podaj prawidłową kwotę')
+      return
+    }
+
+    const result = await addExpense({
+      amount,
+      category: form.category,
+      description: form.description,
+      date: form.date,
+    })
+
+    if (result) {
+      navigate('/expenses')
+    } else {
+      setError('Błąd zapisu. Sprawdź połączenie z bazą danych.')
+    }
   }
 
   return (
@@ -33,7 +52,12 @@ export default function AddExpensePage() {
       </div>
 
       <form onSubmit={handleSubmit} className="card space-y-5">
-        {/* Kwota */}
+        {error && (
+          <div className="bg-red-50 border border-red-200 text-red-700 rounded-xl px-4 py-3 text-sm">
+            {error}
+          </div>
+        )}
+
         <div>
           <label htmlFor="amount" className="label">Kwota (PLN)</label>
           <input
@@ -49,7 +73,6 @@ export default function AddExpensePage() {
           />
         </div>
 
-        {/* Kategoria */}
         <div>
           <label htmlFor="category" className="label">Kategoria</label>
           <select
@@ -60,14 +83,11 @@ export default function AddExpensePage() {
             className="input"
           >
             {DEFAULT_CATEGORIES.map((cat) => (
-              <option key={cat} value={cat}>
-                {cat}
-              </option>
+              <option key={cat} value={cat}>{cat}</option>
             ))}
           </select>
         </div>
 
-        {/* Opis */}
         <div>
           <label htmlFor="description" className="label">Opis (opcjonalny)</label>
           <input
@@ -81,7 +101,6 @@ export default function AddExpensePage() {
           />
         </div>
 
-        {/* Data */}
         <div>
           <label htmlFor="date" className="label">Data</label>
           <input
@@ -95,16 +114,11 @@ export default function AddExpensePage() {
           />
         </div>
 
-        {/* Przyciski */}
         <div className="flex gap-3 pt-2">
-          <button type="submit" className="btn-primary flex-1">
-            Zapisz wydatek
+          <button type="submit" disabled={isLoading} className="btn-primary flex-1">
+            {isLoading ? 'Zapisywanie...' : 'Zapisz wydatek'}
           </button>
-          <button
-            type="button"
-            onClick={() => navigate(-1)}
-            className="btn-secondary"
-          >
+          <button type="button" onClick={() => navigate(-1)} className="btn-secondary">
             Anuluj
           </button>
         </div>
