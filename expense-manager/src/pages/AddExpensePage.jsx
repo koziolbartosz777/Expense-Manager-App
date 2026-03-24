@@ -1,11 +1,13 @@
 import { useState, useEffect } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
-import { useExpenseStore, DEFAULT_CATEGORIES } from '../store/useExpenseStore'
+import { useExpenseStore } from '../store/useExpenseStore'
+import { useCategoryStore } from '../store/useCategoryStore'
 import { parseAmount } from '../lib/utils'
 
 /**
  * Strona dodawania / edycji wydatku.
- * Tryb edycji aktywowany przez ?edit=ID w URL.
+ * Tryb edycji: ?edit=ID w URL.
+ * Kategorie pobierane z useCategoryStore (własne kategorie użytkownika).
  */
 export default function AddExpensePage() {
   const navigate = useNavigate()
@@ -17,20 +19,33 @@ export default function AddExpensePage() {
   const updateExpense = useExpenseStore((s) => s.updateExpense)
   const isLoading = useExpenseStore((s) => s.isLoading)
 
+  const { categories, fetchCategories } = useCategoryStore()
+  const categoryNames = categories.map((c) => `${c.icon} ${c.name}`)
+
+  useEffect(() => {
+    fetchCategories()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
   const isEditMode = Boolean(editId)
-  const editingExpense = isEditMode
-    ? expenses.find((e) => e.id === editId)
-    : null
+  const editingExpense = isEditMode ? expenses.find((e) => e.id === editId) : null
 
   const [form, setForm] = useState({
     amount: '',
-    category: DEFAULT_CATEGORIES[0],
+    category: '',
     description: '',
     date: new Date().toISOString().split('T')[0],
   })
   const [error, setError] = useState('')
 
-  // Wypełnij formularz danymi wydatku w trybie edycji
+  // Ustaw kategorię domyślną gdy kategorie się załadują
+  useEffect(() => {
+    if (categoryNames.length > 0 && !form.category && !isEditMode) {
+      setForm((f) => ({ ...f, category: categoryNames[0] }))
+    }
+  }, [categoryNames])
+
+  // Wypełnij formularz w trybie edycji
   useEffect(() => {
     if (editingExpense) {
       setForm({
@@ -95,7 +110,6 @@ export default function AddExpensePage() {
           </div>
         )}
 
-        {/* Kwota */}
         <div>
           <label htmlFor="amount" className="label">Kwota (PLN)</label>
           <input
@@ -111,7 +125,6 @@ export default function AddExpensePage() {
           />
         </div>
 
-        {/* Kategoria */}
         <div>
           <label htmlFor="category" className="label">Kategoria</label>
           <select
@@ -121,13 +134,12 @@ export default function AddExpensePage() {
             onChange={handleChange}
             className="input"
           >
-            {DEFAULT_CATEGORIES.map((cat) => (
+            {categoryNames.map((cat) => (
               <option key={cat} value={cat}>{cat}</option>
             ))}
           </select>
         </div>
 
-        {/* Opis */}
         <div>
           <label htmlFor="description" className="label">Opis (opcjonalny)</label>
           <input
@@ -141,7 +153,6 @@ export default function AddExpensePage() {
           />
         </div>
 
-        {/* Data */}
         <div>
           <label htmlFor="date" className="label">Data</label>
           <input
@@ -155,24 +166,11 @@ export default function AddExpensePage() {
           />
         </div>
 
-        {/* Przyciski – duże na mobile */}
         <div className="flex gap-3 pt-2">
-          <button
-            type="submit"
-            disabled={isLoading}
-            className="btn-primary flex-1 min-h-[48px]"
-          >
-            {isLoading
-              ? 'Zapisywanie...'
-              : isEditMode
-                ? 'Zaktualizuj wydatek'
-                : 'Zapisz wydatek'}
+          <button type="submit" disabled={isLoading} className="btn-primary flex-1 min-h-[48px]">
+            {isLoading ? 'Zapisywanie...' : isEditMode ? 'Zaktualizuj wydatek' : 'Zapisz wydatek'}
           </button>
-          <button
-            type="button"
-            onClick={() => navigate(-1)}
-            className="btn-secondary min-h-[48px]"
-          >
+          <button type="button" onClick={() => navigate(-1)} className="btn-secondary min-h-[48px]">
             Anuluj
           </button>
         </div>

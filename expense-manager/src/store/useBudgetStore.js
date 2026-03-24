@@ -1,19 +1,22 @@
 import { create } from 'zustand'
 import { supabase } from '../lib/supabase'
+import { useAuthStore } from './useAuthStore'
 
 export const useBudgetStore = create((set, get) => ({
-  // ─── Stan ───
   budgets: [],
   isLoading: false,
   error: null,
 
-  // ─── Pobieranie budżetów ───
   fetchBudgets: async () => {
+    const user = useAuthStore.getState().user
+    if (!user) return
+
     set({ isLoading: true, error: null })
     try {
       const { data, error } = await supabase
         .from('budgets')
         .select('*')
+        .eq('user_id', user.id)
         .order('created_at', { ascending: false })
 
       if (error) throw error
@@ -23,21 +26,20 @@ export const useBudgetStore = create((set, get) => ({
     }
   },
 
-  // ─── Dodawanie budżetu ───
   addBudget: async (budget) => {
+    const user = useAuthStore.getState().user
+    if (!user) return null
+
     set({ isLoading: true, error: null })
     try {
       const { data, error } = await supabase
         .from('budgets')
-        .insert([budget])
+        .insert([{ ...budget, user_id: user.id }])
         .select()
         .single()
 
       if (error) throw error
-      set((state) => ({
-        budgets: [data, ...state.budgets],
-        isLoading: false,
-      }))
+      set((s) => ({ budgets: [data, ...s.budgets], isLoading: false }))
       return data
     } catch (error) {
       set({ error: error.message, isLoading: false })
@@ -45,7 +47,6 @@ export const useBudgetStore = create((set, get) => ({
     }
   },
 
-  // ─── Aktualizacja budżetu ───
   updateBudget: async (id, updates) => {
     set({ isLoading: true, error: null })
     try {
@@ -57,8 +58,8 @@ export const useBudgetStore = create((set, get) => ({
         .single()
 
       if (error) throw error
-      set((state) => ({
-        budgets: state.budgets.map((b) => (b.id === id ? data : b)),
+      set((s) => ({
+        budgets: s.budgets.map((b) => (b.id === id ? data : b)),
         isLoading: false,
       }))
       return data
@@ -68,18 +69,13 @@ export const useBudgetStore = create((set, get) => ({
     }
   },
 
-  // ─── Usuwanie budżetu ───
   deleteBudget: async (id) => {
     set({ isLoading: true, error: null })
     try {
-      const { error } = await supabase
-        .from('budgets')
-        .delete()
-        .eq('id', id)
-
+      const { error } = await supabase.from('budgets').delete().eq('id', id)
       if (error) throw error
-      set((state) => ({
-        budgets: state.budgets.filter((b) => b.id !== id),
+      set((s) => ({
+        budgets: s.budgets.filter((b) => b.id !== id),
         isLoading: false,
       }))
     } catch (error) {
@@ -87,6 +83,5 @@ export const useBudgetStore = create((set, get) => ({
     }
   },
 
-  // ─── Czyszczenie błędu ───
   clearError: () => set({ error: null }),
 }))

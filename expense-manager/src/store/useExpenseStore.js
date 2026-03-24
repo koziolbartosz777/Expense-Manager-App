@@ -1,18 +1,12 @@
 import { create } from 'zustand'
 import { supabase } from '../lib/supabase'
+import { useAuthStore } from './useAuthStore'
 
-// Domyślne kategorie wydatków
+// Domyślne kategorie (fallback gdy brak danych z useCategoryStore)
 export const DEFAULT_CATEGORIES = [
-  '🍔 Jedzenie',
-  '🚗 Transport',
-  '🏠 Dom',
-  '👕 Zakupy',
-  '💊 Zdrowie',
-  '🎮 Rozrywka',
-  '📚 Edukacja',
-  '✈️ Podróże',
-  '💼 Praca',
-  '🔧 Inne',
+  '🍔 Jedzenie', '🚗 Transport', '🏠 Dom', '👕 Zakupy',
+  '💊 Zdrowie', '🎮 Rozrywka', '📚 Edukacja', '✈️ Podróże',
+  '💼 Praca', '🔧 Inne',
 ]
 
 export const useExpenseStore = create((set, get) => ({
@@ -24,11 +18,15 @@ export const useExpenseStore = create((set, get) => ({
 
   // ─── Pobieranie wydatków ───
   fetchExpenses: async () => {
+    const user = useAuthStore.getState().user
+    if (!user) return
+
     set({ isLoading: true, error: null })
     try {
       const { data, error } = await supabase
         .from('expenses')
         .select('*')
+        .eq('user_id', user.id)
         .order('date', { ascending: false })
 
       if (error) throw error
@@ -40,11 +38,14 @@ export const useExpenseStore = create((set, get) => ({
 
   // ─── Dodawanie wydatku ───
   addExpense: async (expense) => {
+    const user = useAuthStore.getState().user
+    if (!user) return null
+
     set({ isLoading: true, error: null })
     try {
       const { data, error } = await supabase
         .from('expenses')
-        .insert([expense])
+        .insert([{ ...expense, user_id: user.id }])
         .select()
         .single()
 
@@ -67,7 +68,6 @@ export const useExpenseStore = create((set, get) => ({
   updateExpense: async (id, updates) => {
     set({ isLoading: true, error: null })
     try {
-      // Zapamiętaj poprzedni stan do undo
       const previousExpense = get().expenses.find((e) => e.id === id)
 
       const { data, error } = await supabase
@@ -96,7 +96,6 @@ export const useExpenseStore = create((set, get) => ({
   deleteExpense: async (id) => {
     set({ isLoading: true, error: null })
     try {
-      // Zapamiętaj wydatek do undo
       const deletedExpense = get().expenses.find((e) => e.id === id)
 
       const { error } = await supabase
@@ -124,43 +123,33 @@ export const useExpenseStore = create((set, get) => ({
     try {
       switch (lastAction.type) {
         case 'add':
-          // Cofnij dodanie → usuń wydatek
-          await supabase
-            .from('expenses')
-            .delete()
-            .eq('id', lastAction.expense.id)
-
+          await supabase.from('expenses').delete().eq('id', lastAction.expense.id)
           set((state) => ({
-            expenses: state.expenses.filter(
-              (e) => e.id !== lastAction.expense.id
-            ),
+            expenses: state.expenses.filter((e) => e.id !== lastAction.expense.id),
             lastAction: null,
           }))
           break
 
-        case 'delete':
-          // Cofnij usunięcie → dodaj z powrotem
+        case 'delete': {
           const { data } = await supabase
             .from('expenses')
             .insert([lastAction.expense])
             .select()
             .single()
-
           set((state) => ({
             expenses: [data, ...state.expenses],
             lastAction: null,
           }))
           break
+        }
 
-        case 'update':
-          // Cofnij aktualizację → przywróć poprzedni stan
+        case 'update': {
           const { data: restored } = await supabase
             .from('expenses')
             .update(lastAction.expense)
             .eq('id', lastAction.expense.id)
             .select()
             .single()
-
           set((state) => ({
             expenses: state.expenses.map((e) =>
               e.id === lastAction.expense.id ? restored : e
@@ -168,15 +157,13 @@ export const useExpenseStore = create((set, get) => ({
             lastAction: null,
           }))
           break
+        }
       }
     } catch (error) {
       set({ error: error.message })
     }
   },
 
-  // ─── Czyszczenie błędu ───
   clearError: () => set({ error: null }),
-
-  // ─── Czyszczenie lastAction ───
   clearLastAction: () => set({ lastAction: null }),
 }))
