@@ -3,6 +3,7 @@ import { useExpenses } from '../hooks/useExpenses'
 import { useCategoryStore } from '../store/useCategoryStore'
 import { useTranslation } from '../hooks/useTranslation'
 import { formatAmount } from '../lib/utils'
+import { translateCategory } from '../lib/categories'
 import {
   LineChart, Line, BarChart, Bar, PieChart, Pie, Cell,
   XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
@@ -69,7 +70,7 @@ export default function AnalyticsPage() {
     if (!filtered.length) return []
     const map = {}
     filtered.forEach((e) => { map[e.category] = (map[e.category] || 0) + Number(e.amount) })
-    return Object.entries(map).map(([n, v]) => ({ name: n, value: v })).sort((a, b) => b.value - a.value)
+    return Object.entries(map).map(([n, v]) => ({ name: n, displayName: translateCategory(n, language), value: v })).sort((a, b) => b.value - a.value)
   }, [filtered])
 
   const barData = useMemo(() => pieData.slice(0, 5), [pieData])
@@ -109,7 +110,7 @@ export default function AnalyticsPage() {
       <div className="card"><h2 className="section-title mb-4">{t('analytics.byCategory')}</h2>
         {pieData.length === 0 ? <div className="flex items-center justify-center h-64 text-gray-400">{t('analytics.noData')} 🍩</div> : (
           <ResponsiveContainer width="100%" height={280}>
-            <PieChart><Pie data={pieData} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={100} label={({ name, percent }) => `${name.split(' ')[0]} ${(percent * 100).toFixed(0)}%`} labelLine={false}>
+            <PieChart><Pie data={pieData} dataKey="value" nameKey="displayName" cx="50%" cy="50%" outerRadius={100} label={({ displayName, percent }) => `${displayName.split(' ')[0]} ${(percent * 100).toFixed(0)}%`} labelLine={false}>
               {pieData.map((e, i) => <Cell key={i} fill={getColor(e.name, i)} />)}</Pie><Tooltip formatter={(v) => formatAmount(v)} /><Legend /></PieChart>
           </ResponsiveContainer>
         )}
@@ -118,7 +119,7 @@ export default function AnalyticsPage() {
       <div className="card"><h2 className="section-title mb-4">{t('analytics.top5')}</h2>
         {barData.length === 0 ? <div className="flex items-center justify-center h-56 text-gray-400">{t('analytics.noData')} 📊</div> : (
           <ResponsiveContainer width="100%" height={220}>
-            <BarChart data={barData} layout="vertical"><CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" /><YAxis dataKey="name" type="category" width={120} tick={{ fontSize: 12 }} /><XAxis type="number" tick={{ fontSize: 12 }} /><Tooltip formatter={(v) => formatAmount(v)} /><Bar dataKey="value" fill="#6366f1" radius={[0, 4, 4, 0]} name={t('analytics.amount')} /></BarChart>
+            <BarChart data={barData} layout="vertical"><CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" /><YAxis dataKey="displayName" type="category" width={120} tick={{ fontSize: 12 }} /><XAxis type="number" tick={{ fontSize: 12 }} /><Tooltip formatter={(v) => formatAmount(v)} /><Bar dataKey="value" fill="#6366f1" radius={[0, 4, 4, 0]} name={t('analytics.amount')} /></BarChart>
           </ResponsiveContainer>
         )}
       </div>

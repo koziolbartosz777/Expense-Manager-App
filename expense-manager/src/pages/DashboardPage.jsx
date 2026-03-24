@@ -4,6 +4,7 @@ import { useExpenses } from '../hooks/useExpenses'
 import { useBudgetStore } from '../store/useBudgetStore'
 import { useTranslation } from '../hooks/useTranslation'
 import { formatAmount, formatDate } from '../lib/utils'
+import { translateCategory } from '../lib/categories'
 import { subMonths, startOfMonth, endOfMonth, startOfYear, isWithinInterval, parseISO } from 'date-fns'
 
 const PERIOD_KEYS = ['month', '3months', '6months', 'year', 'all']
@@ -106,7 +107,7 @@ export default function DashboardPage() {
             {topCategories.map((cat) => (
               <div key={cat.name}>
                 <div className="flex items-center justify-between mb-1">
-                  <span className="text-sm font-medium text-gray-900">{cat.name}</span>
+                  <span className="text-sm font-medium text-gray-900">{translateCategory(cat.name, language)}</span>
                   <span className="text-sm text-gray-500">{formatAmount(cat.value)} · {cat.percent.toFixed(0)}%</span>
                 </div>
                 <div className="w-full h-2 bg-gray-100 rounded-full overflow-hidden">
@@ -136,7 +137,7 @@ export default function DashboardPage() {
                 className="flex items-center justify-between py-3 gap-4 cursor-pointer hover:bg-gray-50 -mx-4 px-4 rounded-xl transition-colors min-h-[44px]">
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2">
-                    <span className="text-sm font-medium text-gray-900 truncate">{expense.category}</span>
+                    <span className="text-sm font-medium text-gray-900 truncate">{translateCategory(expense.category, language)}</span>
                     <span className="text-xs text-gray-400">{formatDate(expense.date, language)}</span>
                   </div>
                   {expense.description && <p className="text-sm text-gray-500 truncate mt-0.5">{expense.description}</p>}

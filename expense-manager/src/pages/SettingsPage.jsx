@@ -4,6 +4,7 @@ import { useCategoryStore } from '../store/useCategoryStore'
 import { useAuthStore } from '../store/useAuthStore'
 import { useLanguageStore } from '../store/useLanguageStore'
 import { useTranslation } from '../hooks/useTranslation'
+import { translateCategory } from '../lib/categories'
 import ConfirmModal from '../components/ui/Modal'
 
 const PRESET_COLORS = [
@@ -125,7 +126,7 @@ export default function SettingsPage() {
               ) : (
                 <>
                   <span className="text-lg">{cat.icon}</span>
-                  <span className="flex-1 text-sm font-medium text-gray-900">{cat.name}</span>
+                  <span className="flex-1 text-sm font-medium text-gray-900">{translateCategory(`${cat.icon} ${cat.name}`, language).replace(/^\S+\s+/, '')}</span>
                   <button onClick={() => startEdit(cat)} className="text-xs text-gray-400 hover:text-primary-500 min-w-[44px] min-h-[44px] flex items-center justify-center">✏️</button>
                   {!cat.is_default && <button onClick={() => setDeleteId(cat.id)} className="text-xs text-gray-400 hover:text-red-500 min-w-[44px] min-h-[44px] flex items-center justify-center">🗑️</button>}
                 </>

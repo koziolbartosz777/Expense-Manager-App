@@ -42,7 +42,7 @@ export default function Navbar() {
       {/* Mobile top bar */}
       <header className="md:hidden sticky top-0 z-40 bg-white/80 dark:bg-[#111111]/80 backdrop-blur-lg border-b border-gray-100 dark:border-[#222222]">
         <div className="flex items-center justify-between h-14 px-4">
-          <h1 className={`text-lg font-bold ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
+          <h1 className="text-lg font-bold text-gray-900 dark:text-white">
             <span className="text-primary-500">💰</span> Expense Manager
           </h1>
           <div className="flex items-center gap-1">
@@ -66,8 +66,8 @@ export default function Navbar() {
           <div className="flex items-center gap-3">
             <div className="w-9 h-9 bg-primary-500 rounded-xl flex items-center justify-center text-white text-lg">💰</div>
             <div>
-              <h1 className={`text-base font-bold ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>Expense Manager</h1>
-              <p className="text-xs text-gray-400 truncate max-w-[120px]">{user?.email || ''}</p>
+              <h1 className="text-base font-bold text-gray-900 dark:text-white">Expense Manager</h1>
+              <p className="text-xs text-gray-600 dark:text-gray-400 truncate max-w-[120px]">{user?.email || ''}</p>
             </div>
           </div>
           <button onClick={toggleTheme}

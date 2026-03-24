@@ -5,6 +5,7 @@ import { useExpenseStore } from '../store/useExpenseStore'
 import { useCategoryStore } from '../store/useCategoryStore'
 import { useTranslation } from '../hooks/useTranslation'
 import { formatAmount, formatDate } from '../lib/utils'
+import { translateCategory } from '../lib/categories'
 import ConfirmModal from '../components/ui/Modal'
 
 export default function ExpensesPage() {
@@ -13,7 +14,12 @@ export default function ExpensesPage() {
   const { expenses, isLoading } = useExpenses()
   const deleteExpense = useExpenseStore((s) => s.deleteExpense)
   const { categories, fetchCategories } = useCategoryStore()
-  const categoryNames = categories.map((c) => `${c.icon} ${c.name}`)
+
+  // value = polski, label = przetłumaczony
+  const categoryOptions = categories.map((c) => {
+    const value = `${c.icon} ${c.name}`
+    return { value, label: translateCategory(value, language) }
+  })
 
   useEffect(() => { fetchCategories() }, []) // eslint-disable-line
 
@@ -37,18 +43,28 @@ export default function ExpensesPage() {
 
   const filtered = useMemo(() => {
     let result = expenses.filter((e) => {
-      const ms = !search || e.description?.toLowerCase().includes(search.toLowerCase()) || e.amount?.toString().includes(search) || e.category?.toLowerCase().includes(search.toLowerCase())
+      // Szukaj po przetłumaczonej nazwie kategorii
+      const translatedCat = translateCategory(e.category, language)
+      const ms = !search ||
+        e.description?.toLowerCase().includes(search.toLowerCase()) ||
+        e.amount?.toString().includes(search) ||
+        translatedCat?.toLowerCase().includes(search.toLowerCase()) ||
+        e.category?.toLowerCase().includes(search.toLowerCase())
       return ms && (!filterCategory || e.category === filterCategory) && (!dateFrom || e.date >= dateFrom) && (!dateTo || e.date <= dateTo)
     })
     switch (sortBy) {
       case 'oldest': result = [...result].sort((a, b) => a.date.localeCompare(b.date)); break
       case 'amount_desc': result = [...result].sort((a, b) => Number(b.amount) - Number(a.amount)); break
       case 'amount_asc': result = [...result].sort((a, b) => Number(a.amount) - Number(b.amount)); break
-      case 'category_az': result = [...result].sort((a, b) => a.category.localeCompare(b.category)); break
+      case 'category_az': result = [...result].sort((a, b) => {
+        const aT = translateCategory(a.category, language)
+        const bT = translateCategory(b.category, language)
+        return aT.localeCompare(bT)
+      }); break
       default: result = [...result].sort((a, b) => b.date.localeCompare(a.date))
     }
     return result
-  }, [expenses, search, filterCategory, dateFrom, dateTo, sortBy])
+  }, [expenses, search, filterCategory, dateFrom, dateTo, sortBy, language])
 
   const filteredTotal = useMemo(() => filtered.reduce((s, e) => s + Number(e.amount), 0), [filtered])
 
@@ -80,7 +96,7 @@ export default function ExpensesPage() {
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <select className="input" value={filterCategory} onChange={(e) => setFilterCategory(e.target.value)}>
             <option value="">{t('expenses.allCategories')}</option>
-            {categoryNames.map((cat) => <option key={cat} value={cat}>{cat}</option>)}
+            {categoryOptions.map((opt) => <option key={opt.value} value={opt.value}>{opt.label}</option>)}
           </select>
           <select className="input" value={sortBy} onChange={(e) => setSortBy(e.target.value)}>
             {SORT_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
@@ -109,7 +125,7 @@ export default function ExpensesPage() {
             <div key={expense.id} className="flex flex-col sm:flex-row sm:items-center justify-between py-4 gap-2 sm:gap-4">
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2">
-                  <span className="text-sm font-medium text-gray-900 truncate">{expense.category}</span>
+                  <span className="text-sm font-medium text-gray-900 truncate">{translateCategory(expense.category, language)}</span>
                   <span className="text-xs text-gray-400">{formatDate(expense.date, language)}</span>
                 </div>
                 {expense.description && <p className="text-sm text-gray-500 truncate mt-0.5">{expense.description}</p>}

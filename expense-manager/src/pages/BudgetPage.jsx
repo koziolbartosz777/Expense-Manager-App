@@ -4,15 +4,19 @@ import { useExpenseStore } from '../store/useExpenseStore'
 import { useCategoryStore } from '../store/useCategoryStore'
 import { useTranslation } from '../hooks/useTranslation'
 import { formatAmount } from '../lib/utils'
+import { translateCategory } from '../lib/categories'
 import ConfirmModal from '../components/ui/Modal'
 
 export default function BudgetPage() {
-  const { t } = useTranslation()
+  const { t, language } = useTranslation()
   const { budgets, addBudget, updateBudget, deleteBudget, fetchBudgets, isLoading } = useBudgetStore()
   const expenses = useExpenseStore((s) => s.expenses)
   const fetchExpenses = useExpenseStore((s) => s.fetchExpenses)
   const { categories, fetchCategories } = useCategoryStore()
-  const categoryNames = categories.map((c) => `${c.icon} ${c.name}`)
+  const categoryOptions = categories.map((c) => {
+    const value = `${c.icon} ${c.name}`
+    return { value, label: translateCategory(value, language) }
+  })
 
   const [showForm, setShowForm] = useState(false)
   const [editingBudget, setEditingBudget] = useState(null)
@@ -60,7 +64,7 @@ export default function BudgetPage() {
           <div><label htmlFor="bc" className="label">{t('addExpense.category')}</label>
             <select id="bc" name="category" value={form.category} onChange={handleChange} className="input">
               <option value="__all__">{t('budget.allCategories')}</option>
-              {categoryNames.map((c) => <option key={c} value={c}>{c}</option>)}
+              {categoryOptions.map((opt) => <option key={opt.value} value={opt.value}>{opt.label}</option>)}
             </select></div>
           <div><label htmlFor="bl" className="label">{t('budget.limitAmount')}</label>
             <input id="bl" name="limit_amount" type="text" inputMode="decimal" placeholder="500" value={form.limit_amount} onChange={handleChange} className="input" required /></div>
@@ -92,7 +96,7 @@ export default function BudgetPage() {
               <div key={b.id} className="card animate-fade-in">
                 <div className="flex items-center justify-between mb-3">
                   <div>
-                    <h3 className="font-semibold text-gray-900">{isAll ? t('budget.allExpensesLabel') : b.category}</h3>
+                    <h3 className="font-semibold text-gray-900">{isAll ? t('budget.allExpensesLabel') : translateCategory(b.category, language)}</h3>
                     <p className="text-xs text-gray-400">{b.period === 'yearly' ? t('budget.yearly') : t('budget.monthly')}</p>
                   </div>
                   <div className="flex items-center gap-1">

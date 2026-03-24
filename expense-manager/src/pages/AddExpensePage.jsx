@@ -4,10 +4,11 @@ import { useExpenseStore } from '../store/useExpenseStore'
 import { useCategoryStore } from '../store/useCategoryStore'
 import { useTranslation } from '../hooks/useTranslation'
 import { parseAmount } from '../lib/utils'
+import { translateCategory } from '../lib/categories'
 
 export default function AddExpensePage() {
   const navigate = useNavigate()
-  const { t } = useTranslation()
+  const { t, language } = useTranslation()
   const [searchParams] = useSearchParams()
   const editId = searchParams.get('edit')
 
@@ -16,7 +17,12 @@ export default function AddExpensePage() {
   const updateExpense = useExpenseStore((s) => s.updateExpense)
   const isLoading = useExpenseStore((s) => s.isLoading)
   const { categories, fetchCategories } = useCategoryStore()
-  const categoryNames = categories.map((c) => `${c.icon} ${c.name}`)
+
+  // value = zawsze polski (do zapisu w DB), label = tłumaczony (do wyświetlania)
+  const categoryOptions = categories.map((c) => {
+    const value = `${c.icon} ${c.name}` // DB value (polski)
+    return { value, label: translateCategory(value, language) }
+  })
 
   useEffect(() => { fetchCategories() }, []) // eslint-disable-line
 
@@ -26,12 +32,20 @@ export default function AddExpensePage() {
   const [form, setForm] = useState({ amount: '', category: '', description: '', date: new Date().toISOString().split('T')[0] })
   const [error, setError] = useState('')
 
+  // Ustaw domyślną kategorię (polski value)
   useEffect(() => {
-    if (categoryNames.length > 0 && !form.category && !isEditMode) setForm((f) => ({ ...f, category: categoryNames[0] }))
-  }, [categoryNames])
+    if (categoryOptions.length > 0 && !form.category && !isEditMode) {
+      setForm((f) => ({ ...f, category: categoryOptions[0].value }))
+    }
+  }, [categoryOptions.length])
 
   useEffect(() => {
-    if (editingExpense) setForm({ amount: String(editingExpense.amount).replace('.', ','), category: editingExpense.category, description: editingExpense.description || '', date: editingExpense.date })
+    if (editingExpense) setForm({
+      amount: String(editingExpense.amount).replace('.', ','),
+      category: editingExpense.category,
+      description: editingExpense.description || '',
+      date: editingExpense.date,
+    })
   }, [editingExpense])
 
   const handleChange = (e) => setForm((p) => ({ ...p, [e.target.name]: e.target.value }))
@@ -40,6 +54,7 @@ export default function AddExpensePage() {
     e.preventDefault(); setError('')
     const amount = parseAmount(form.amount)
     if (!amount || amount <= 0) { setError(t('addExpense.invalidAmount')); return }
+    // category jest zawsze polskim value — bezpiecznie do DB
     const payload = { amount, category: form.category, description: form.description, date: form.date }
     const result = isEditMode ? await updateExpense(editId, payload) : await addExpense(payload)
     if (result) navigate('/expenses')
@@ -61,7 +76,7 @@ export default function AddExpensePage() {
 
         <div><label htmlFor="category" className="label">{t('addExpense.category')}</label>
           <select id="category" name="category" value={form.category} onChange={handleChange} className="input">
-            {categoryNames.map((cat) => <option key={cat} value={cat}>{cat}</option>)}
+            {categoryOptions.map((opt) => <option key={opt.value} value={opt.value}>{opt.label}</option>)}
           </select></div>
 
         <div><label htmlFor="description" className="label">{t('addExpense.description')}</label>
