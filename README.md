@@ -4,7 +4,7 @@
 
 ---
 
-## ✨ Why is this different? (Unique Selling Proposition)
+## ✨ Why is this different?
 
 Instead of relying on annoying confirmation pop-ups, this app implements a **frictionless UX** inspired by top-tier products:
 * 🔄 **Smooth Undo Action:** Accidentally deleted an expense? You have a 4-second Toast window to undo the action. No friction, just flow.
