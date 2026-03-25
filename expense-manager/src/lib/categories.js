@@ -57,3 +57,43 @@ export function getTranslatedCategories(language) {
     label: `${c.emoji} ${c[language] || c.pl}`, // display label
   }))
 }
+
+// ═══════════════════════════════════════════
+// PRZYCHODY (INCOME)
+// ═══════════════════════════════════════════
+
+export const INCOME_CATEGORY_MAP = [
+  { emoji: '💰', key: 'salary',    pl: 'Wynagrodzenie', en: 'Salary',          de: 'Gehalt' },
+  { emoji: '💻', key: 'freelance', pl: 'Freelance',     en: 'Freelance',       de: 'Freelance' },
+  { emoji: '🎁', key: 'gift',      pl: 'Prezent',       en: 'Gift',            de: 'Geschenk' },
+  { emoji: '↩️', key: 'refund',    pl: 'Zwrot środków', en: 'Refund',          de: 'Rückerstattung' },
+  { emoji: '📦', key: 'other',     pl: 'Inne',          en: 'Other',           de: 'Sonstiges' },
+]
+
+/**
+ * Tłumaczy przechowywaną wartość kategorii przychodu na wybrany język.
+ * Analogiczna do translateCategory, ale dla INCOME_CATEGORY_MAP.
+ */
+export function translateIncomeCategory(storedValue, language) {
+  if (!storedValue) return storedValue
+
+  const emojiMatch = storedValue.match(/^(\p{Emoji_Presentation}|\p{Emoji}\uFE0F?)\s*/u)
+  if (!emojiMatch) return storedValue
+
+  const emoji = emojiMatch[1]
+  const entry = INCOME_CATEGORY_MAP.find((c) => c.emoji === emoji)
+  if (!entry) return storedValue
+
+  const translatedName = entry[language] || entry['pl']
+  return `${emoji} ${translatedName}`
+}
+
+/**
+ * Zwraca listę kategorii przychodów przetłumaczonych na dany język.
+ */
+export function getTranslatedIncomeCategories(language) {
+  return INCOME_CATEGORY_MAP.map((c) => ({
+    value: `${c.emoji} ${c.pl}`,
+    label: `${c.emoji} ${c[language] || c.pl}`,
+  }))
+}

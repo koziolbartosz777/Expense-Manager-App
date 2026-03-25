@@ -4,6 +4,8 @@ import Shell from './components/layout/Shell'
 import DashboardPage from './pages/DashboardPage'
 import ExpensesPage from './pages/ExpensesPage'
 import AddExpensePage from './pages/AddExpensePage'
+import IncomePage from './pages/IncomePage'
+import AddIncomePage from './pages/AddIncomePage'
 import AnalyticsPage from './pages/AnalyticsPage'
 import BudgetPage from './pages/BudgetPage'
 import SettingsPage from './pages/SettingsPage'
@@ -66,6 +68,8 @@ export default function App() {
           <Route path="/" element={<DashboardPage />} />
           <Route path="/expenses" element={<ExpensesPage />} />
           <Route path="/add" element={<AddExpensePage />} />
+          <Route path="/income" element={<IncomePage />} />
+          <Route path="/add-income" element={<AddIncomePage />} />
           <Route path="/analytics" element={<AnalyticsPage />} />
           <Route path="/budget" element={<BudgetPage />} />
           <Route path="/settings" element={<SettingsPage />} />

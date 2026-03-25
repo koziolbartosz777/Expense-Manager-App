@@ -9,9 +9,10 @@ import ConfirmModal from '../ui/Modal'
 const NAV_ITEMS = [
   { to: '/', key: 'dashboard', icon: '🏠' },
   { to: '/expenses', key: 'expenses', icon: '📋', hasBadge: true },
+  { to: '/income', key: 'income', icon: '💰' },
   { to: '/add', key: 'addExpense', icon: '➕' },
   { to: '/analytics', key: 'analytics', icon: '📊' },
-  { to: '/budget', key: 'budget', icon: '💰' },
+  { to: '/budget', key: 'budget', icon: '🎯' },
   { to: '/settings', key: 'settings', icon: '⚙️' },
 ]
 

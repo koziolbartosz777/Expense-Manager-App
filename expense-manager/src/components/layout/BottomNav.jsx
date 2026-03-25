@@ -6,6 +6,7 @@ import { useExpenseStore } from '../../store/useExpenseStore'
 const NAV_ITEMS = [
   { to: '/', key: 'dashboard', icon: '🏠' },
   { to: '/expenses', key: 'expenses', icon: '📋', hasBadge: true },
+  { to: '/income', key: 'income', icon: '💰' },
   { to: '/add', icon: '+', isAdd: true },
   { to: '/analytics', key: 'analytics', icon: '📊' },
   { to: '/settings', key: 'settings', icon: '⚙️' },
