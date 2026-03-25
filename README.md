@@ -11,7 +11,7 @@ Instead of relying on annoying confirmation pop-ups, this app implements a **fri
 * 🔒 **Privacy First:** Built on top of **Supabase Row Level Security (RLS)**. Every user's data is cryptographically isolated at the database level.
 * 📱 **Cross-Platform PWA:** Installable directly on iOS and Android devices without going through the App Store.
 
-## 🧰 Tech Stack & Architecture
+## Tech Stack & Architecture
 
 **Frontend:**
 * **Core:** React 18 + Vite 5
