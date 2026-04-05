@@ -2,13 +2,6 @@ import { create } from 'zustand'
 import { supabase } from '../lib/supabase'
 import { useAuthStore } from './useAuthStore'
 
-// Domyślne kategorie (fallback gdy brak danych z useCategoryStore)
-export const DEFAULT_CATEGORIES = [
-  '🍔 Jedzenie', '🚗 Transport', '🏠 Dom', '👕 Zakupy',
-  '💊 Zdrowie', '🎮 Rozrywka', '📚 Edukacja', '✈️ Podróże',
-  '💼 Praca', '🔧 Inne',
-]
-
 export const useExpenseStore = create((set, get) => ({
   // ─── Stan ───
   expenses: [],

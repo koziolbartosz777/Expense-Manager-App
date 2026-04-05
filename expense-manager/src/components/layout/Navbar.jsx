@@ -3,6 +3,7 @@ import { NavLink } from 'react-router-dom'
 import { useThemeStore } from '../../store/useThemeStore'
 import { useAuthStore } from '../../store/useAuthStore'
 import { useExpenseStore } from '../../store/useExpenseStore'
+import { useUIStore } from '../../store/useUIStore'
 import { useTranslation } from '../../hooks/useTranslation'
 import ConfirmModal from '../ui/Modal'
 
@@ -23,6 +24,7 @@ export default function Navbar() {
   const user = useAuthStore((s) => s.user)
   const signOut = useAuthStore((s) => s.signOut)
   const expenses = useExpenseStore((s) => s.expenses)
+  const setGlobalSearchOpen = useUIStore((s) => s.setGlobalSearchOpen)
   const [showLogout, setShowLogout] = useState(false)
 
   const thisMonthCount = useMemo(() => {
@@ -47,6 +49,11 @@ export default function Navbar() {
             <span className="text-primary-500">💰</span> Expense Manager
           </h1>
           <div className="flex items-center gap-1">
+            <button onClick={() => setGlobalSearchOpen(true)}
+              className="w-10 h-10 flex items-center justify-center rounded-xl hover:bg-gray-100 dark:hover:bg-[#1a1a1a] transition-colors"
+              title="Search (Ctrl+K)">
+              🔍
+            </button>
             <button onClick={toggleTheme}
               className="w-10 h-10 flex items-center justify-center rounded-xl hover:bg-gray-100 dark:hover:bg-[#1a1a1a] transition-colors"
               title={theme === 'light' ? 'Dark' : 'Light'}>
@@ -71,10 +78,17 @@ export default function Navbar() {
               <p className="text-xs text-gray-600 dark:text-gray-400 truncate max-w-[120px]">{user?.email || ''}</p>
             </div>
           </div>
-          <button onClick={toggleTheme}
-            className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-gray-100 dark:hover:bg-[#1a1a1a] transition-colors text-sm">
-            {theme === 'light' ? '🌙' : '☀️'}
-          </button>
+          <div className="flex items-center gap-0.5">
+            <button onClick={() => setGlobalSearchOpen(true)}
+              className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-gray-100 dark:hover:bg-[#1a1a1a] transition-colors text-sm"
+              title="Search (Ctrl+K)">
+              🔍
+            </button>
+            <button onClick={toggleTheme}
+              className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-gray-100 dark:hover:bg-[#1a1a1a] transition-colors text-sm">
+              {theme === 'light' ? '🌙' : '☀️'}
+            </button>
+          </div>
         </div>
 
         <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto">

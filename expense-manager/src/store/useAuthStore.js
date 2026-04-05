@@ -19,11 +19,25 @@ export const useAuthStore = create((set, get) => ({
       })
 
       // Nasłuchuj zmian sesji (login/logout/token refresh)
-      supabase.auth.onAuthStateChange((_event, session) => {
+      supabase.auth.onAuthStateChange(async (_event, session) => {
         set({
           user: session?.user ?? null,
           session: session ?? null,
         })
+
+        // Process recurring transactions on sign-in
+        if (_event === 'SIGNED_IN' && session?.user) {
+          try {
+            const { processRecurringTransactions } = await import('../lib/recurringProcessor')
+            const count = await processRecurringTransactions(session.user.id)
+            if (count > 0) {
+              const { useUIStore } = await import('./useUIStore')
+              useUIStore.getState().setToastMessage(`Added ${count} recurring transactions 🔄`)
+            }
+          } catch (e) {
+            console.error('Recurring processing on sign-in:', e)
+          }
+        }
       })
     } catch (error) {
       console.error('Auth init error:', error)

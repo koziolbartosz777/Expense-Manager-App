@@ -14,6 +14,14 @@ const PRESET_COLORS = [
   { value: '#f97316', label: 'Orange' },
   { value: '#22c55e', label: 'Green' },
   { value: '#14b8a6', label: 'Teal' },
+  { value: '#ef4444', label: 'Red' },
+  { value: '#3b82f6', label: 'Blue' },
+]
+
+const EMOJI_QUICK_PICK = [
+  '🍕','🍺','🎵','🏋️','🐕','🌿','🎨','🎯','🏖️','🎪',
+  '🚀','🎭','🎬','🎤','🎸','🎹','🏆','🥇','🎲','♟️',
+  '🌍','🌙','⭐','🔥','💎','👑','🦋','🌸','🍀','🎋',
 ]
 
 const LANGS = [
@@ -23,10 +31,10 @@ const LANGS = [
 ]
 
 export default function SettingsPage() {
-  const { t } = useTranslation()
+  const { t, language } = useTranslation()
   const theme = useThemeStore((s) => s.theme)
   const toggleTheme = useThemeStore((s) => s.toggleTheme)
-  const language = useLanguageStore((s) => s.language)
+  const lang = useLanguageStore((s) => s.language)
   const setLanguage = useLanguageStore((s) => s.setLanguage)
   const user = useAuthStore((s) => s.user)
   const { categories, fetchCategories, addCategory, updateCategory, deleteCategory, isLoading } = useCategoryStore()
@@ -74,7 +82,7 @@ export default function SettingsPage() {
           <div className="flex gap-2">
             {LANGS.map((l) => (
               <button key={l.code} onClick={() => setLanguage(l.code)}
-                className={`flex-1 flex items-center justify-center gap-1 px-3 py-2.5 rounded-xl text-sm font-medium transition-all min-h-[44px] ${language === l.code ? 'bg-primary-500 text-white shadow-sm' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}>{l.label}</button>
+                className={`flex-1 flex items-center justify-center gap-1 px-3 py-2.5 rounded-xl text-sm font-medium transition-all min-h-[44px] ${lang === l.code ? 'bg-primary-500 text-white shadow-sm' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}>{l.label}</button>
             ))}
           </div>
         </div>
@@ -95,19 +103,45 @@ export default function SettingsPage() {
         </div>
 
         {showAddForm && (
-          <form onSubmit={handleAdd} className="space-y-3 p-3 bg-gray-50 dark:bg-[#1a1a1a] rounded-xl animate-slide-up">
+          <form onSubmit={handleAdd} className="space-y-4 p-4 bg-gray-50 dark:bg-[#1a1a1a] rounded-xl animate-slide-up">
             {formError && <p className="text-sm text-red-500">{formError}</p>}
-            <div className="grid grid-cols-[60px_1fr] gap-2">
-              <input type="text" placeholder="📌" value={form.icon} onChange={(e) => setForm((f) => ({ ...f, icon: e.target.value }))} className="input text-center text-xl" maxLength={4} />
-              <input type="text" placeholder={t('settings.categoryName')} value={form.name} onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))} className="input" maxLength={30} required />
+
+            {/* Emoji preview + input */}
+            <div className="flex items-center gap-4">
+              <div className="w-16 h-16 bg-white dark:bg-[#222] rounded-2xl border-2 border-gray-200 dark:border-[#333] flex items-center justify-center shadow-sm">
+                <span style={{ fontSize: '2rem' }}>{form.icon || '📌'}</span>
+              </div>
+              <div className="flex-1">
+                <label className="label text-xs">{t('settings.emojiPreview')}</label>
+                <input type="text" placeholder="📌" value={form.icon} onChange={(e) => setForm((f) => ({ ...f, icon: e.target.value }))} className="input text-center text-xl" maxLength={4} />
+              </div>
             </div>
-            <div className="flex gap-2">
+
+            {/* Emoji quick-pick grid */}
+            <div>
+              <label className="label text-xs">{t('settings.quickPick')}</label>
+              <div className="grid grid-cols-10 gap-1">
+                {EMOJI_QUICK_PICK.map((emoji) => (
+                  <button key={emoji} type="button" onClick={() => setForm((f) => ({ ...f, icon: emoji }))}
+                    className={`w-9 h-9 flex items-center justify-center rounded-lg text-lg transition-all hover:bg-gray-200 dark:hover:bg-[#333] ${form.icon === emoji ? 'bg-primary-100 dark:bg-primary-900/30 ring-2 ring-primary-500 scale-110' : 'bg-white dark:bg-[#222]'}`}>
+                    {emoji}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Category name */}
+            <input type="text" placeholder={t('settings.categoryName')} value={form.name} onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))} className="input" maxLength={30} required />
+
+            {/* Color picker */}
+            <div className="flex gap-2 flex-wrap">
               {PRESET_COLORS.map((c) => (
                 <button key={c.value} type="button" onClick={() => setForm((f) => ({ ...f, color: c.value }))}
                   className={`w-8 h-8 rounded-full transition-all ${form.color === c.value ? 'ring-2 ring-offset-2 ring-primary-500 scale-110' : ''}`}
                   style={{ backgroundColor: c.value }} title={c.label} />
               ))}
             </div>
+
             <button type="submit" disabled={isLoading} className="btn-primary w-full text-sm min-h-[44px]">{isLoading ? t('settings.adding') : t('settings.addCategoryBtn')}</button>
           </form>
         )}

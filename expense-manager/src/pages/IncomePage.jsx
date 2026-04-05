@@ -7,6 +7,14 @@ import { formatAmount, formatDate } from '../lib/utils'
 import { translateIncomeCategory, getTranslatedIncomeCategories } from '../lib/categories'
 import ConfirmModal from '../components/ui/Modal'
 
+const FREQ_LABELS = {
+  weekly: 'addIncome.weekly',
+  biweekly: 'addIncome.biweekly',
+  monthly: 'addIncome.monthly',
+  quarterly: 'addIncome.quarterly',
+  yearly: 'addIncome.yearly',
+}
+
 export default function IncomePage() {
   const navigate = useNavigate()
   const { t, language } = useTranslation()
@@ -17,6 +25,7 @@ export default function IncomePage() {
 
   const [search, setSearch] = useState('')
   const [filterCategory, setFilterCategory] = useState('')
+  const [filterRecurring, setFilterRecurring] = useState(false)
   const [dateFrom, setDateFrom] = useState('')
   const [dateTo, setDateTo] = useState('')
   const [sortBy, setSortBy] = useState('newest')
@@ -30,8 +39,8 @@ export default function IncomePage() {
     { value: 'category_az', label: t('income.categoryAZ') },
   ]
 
-  const hasActiveFilters = search || filterCategory || dateFrom || dateTo || sortBy !== 'newest'
-  const clearFilters = () => { setSearch(''); setFilterCategory(''); setDateFrom(''); setDateTo(''); setSortBy('newest') }
+  const hasActiveFilters = search || filterCategory || filterRecurring || dateFrom || dateTo || sortBy !== 'newest'
+  const clearFilters = () => { setSearch(''); setFilterCategory(''); setFilterRecurring(false); setDateFrom(''); setDateTo(''); setSortBy('newest') }
 
   const filtered = useMemo(() => {
     let result = income.filter((i) => {
@@ -41,7 +50,8 @@ export default function IncomePage() {
         i.amount?.toString().includes(search) ||
         translatedCat?.toLowerCase().includes(search.toLowerCase()) ||
         i.category?.toLowerCase().includes(search.toLowerCase())
-      return ms && (!filterCategory || i.category === filterCategory) && (!dateFrom || i.date >= dateFrom) && (!dateTo || i.date <= dateTo)
+      const recurringMatch = !filterRecurring || i.is_recurring
+      return ms && (!filterCategory || i.category === filterCategory) && recurringMatch && (!dateFrom || i.date >= dateFrom) && (!dateTo || i.date <= dateTo)
     })
     switch (sortBy) {
       case 'oldest': result = [...result].sort((a, b) => a.date.localeCompare(b.date)); break
@@ -55,7 +65,7 @@ export default function IncomePage() {
       default: result = [...result].sort((a, b) => b.date.localeCompare(a.date))
     }
     return result
-  }, [income, search, filterCategory, dateFrom, dateTo, sortBy, language])
+  }, [income, search, filterCategory, filterRecurring, dateFrom, dateTo, sortBy, language])
 
   const filteredTotal = useMemo(() => filtered.reduce((s, i) => s + Number(i.amount), 0), [filtered])
 
@@ -93,6 +103,14 @@ export default function IncomePage() {
             {SORT_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
           </select>
         </div>
+        <div className="flex items-center gap-2 flex-wrap">
+          <button
+            onClick={() => setFilterRecurring(!filterRecurring)}
+            className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-all min-h-[36px] ${filterRecurring ? 'bg-primary-500 text-white shadow-sm' : 'bg-gray-100 dark:bg-[#1a1a1a] text-gray-600 dark:text-gray-400 hover:bg-gray-200'}`}
+          >
+            {t('income.recurringFilter')}
+          </button>
+        </div>
         <div className="grid grid-cols-2 gap-3">
           <div><label className="label">{t('income.from')}</label><input type="date" className="input" value={dateFrom} onChange={(e) => setDateFrom(e.target.value)} /></div>
           <div><label className="label">{t('income.to')}</label><input type="date" className="input" value={dateTo} onChange={(e) => setDateTo(e.target.value)} /></div>
@@ -115,11 +133,13 @@ export default function IncomePage() {
           filtered.map((item) => (
             <div key={item.id} className="flex flex-col sm:flex-row sm:items-center justify-between py-4 gap-2 sm:gap-4">
               <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 flex-wrap">
                   <span className="text-sm font-medium text-gray-900 truncate">{translateIncomeCategory(item.category, language)}</span>
                   <span className="text-xs text-gray-400">{formatDate(item.date, language)}</span>
                   {item.is_recurring && (
-                    <span className="text-xs bg-blue-50 text-blue-600 dark:bg-blue-900/20 dark:text-blue-400 px-2 py-0.5 rounded-full font-medium">{t('income.recurring')}</span>
+                    <span className="text-xs bg-blue-50 text-blue-600 dark:bg-blue-900/20 dark:text-blue-400 px-2 py-0.5 rounded-full font-medium">
+                      🔄 {t(FREQ_LABELS[item.recurring_frequency] || 'income.recurring')}
+                    </span>
                   )}
                 </div>
                 {item.description && <p className="text-sm text-gray-500 truncate mt-0.5">{item.description}</p>}

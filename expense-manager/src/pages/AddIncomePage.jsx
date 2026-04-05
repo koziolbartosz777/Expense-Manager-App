@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useIncomeStore } from '../store/useIncomeStore'
 import { useTranslation } from '../hooks/useTranslation'
@@ -12,10 +12,19 @@ function calcNextDate(dateStr, frequency) {
   const d = new Date(dateStr)
   switch (frequency) {
     case 'weekly': d.setDate(d.getDate() + 7); break
+    case 'biweekly': d.setDate(d.getDate() + 14); break
     case 'monthly': d.setMonth(d.getMonth() + 1); break
+    case 'quarterly': d.setMonth(d.getMonth() + 3); break
     case 'yearly': d.setFullYear(d.getFullYear() + 1); break
   }
   return d.toISOString().split('T')[0]
+}
+
+function formatPreviewDate(dateStr, language) {
+  const d = new Date(dateStr)
+  return d.toLocaleDateString(language === 'pl' ? 'pl-PL' : language === 'de' ? 'de-DE' : 'en-US', {
+    day: 'numeric', month: 'short', year: 'numeric'
+  })
 }
 
 export default function AddIncomePage() {
@@ -41,6 +50,7 @@ export default function AddIncomePage() {
     date: new Date().toISOString().split('T')[0],
     is_recurring: false,
     recurring_frequency: 'monthly',
+    recurring_start_date: new Date().toISOString().split('T')[0],
   })
   const [error, setError] = useState('')
 
@@ -59,10 +69,16 @@ export default function AddIncomePage() {
       date: editingIncome.date,
       is_recurring: editingIncome.is_recurring || false,
       recurring_frequency: editingIncome.recurring_frequency || 'monthly',
+      recurring_start_date: editingIncome.date,
     })
   }, [editingIncome])
 
   const handleChange = (e) => setForm((p) => ({ ...p, [e.target.name]: e.target.value }))
+
+  const nextDate = useMemo(() => {
+    if (!form.is_recurring) return null
+    return calcNextDate(form.recurring_start_date, form.recurring_frequency)
+  }, [form.is_recurring, form.recurring_start_date, form.recurring_frequency])
 
   const handleSubmit = async (e) => {
     e.preventDefault(); setError('')
@@ -76,7 +92,7 @@ export default function AddIncomePage() {
       date: form.date,
       is_recurring: form.is_recurring,
       recurring_frequency: form.is_recurring ? form.recurring_frequency : null,
-      recurring_next_date: form.is_recurring ? calcNextDate(form.date, form.recurring_frequency) : null,
+      recurring_next_date: form.is_recurring ? calcNextDate(form.recurring_start_date, form.recurring_frequency) : null,
     }
 
     const result = isEditMode ? await updateIncome(editId, payload) : await addIncome(payload)
@@ -111,29 +127,53 @@ export default function AddIncomePage() {
         {/* Przychód cykliczny */}
         <div className="space-y-3">
           <label className="flex items-center gap-3 cursor-pointer min-h-[44px]">
-            <input
-              type="checkbox"
-              checked={form.is_recurring}
-              onChange={(e) => setForm((f) => ({ ...f, is_recurring: e.target.checked }))}
-              className="w-5 h-5 rounded border-gray-300 text-primary-500 focus:ring-primary-500"
-            />
-            <span className="text-sm font-medium text-gray-700 dark:text-gray-300">{t('addIncome.isRecurring')}</span>
+            <div className="relative">
+              <input
+                type="checkbox"
+                checked={form.is_recurring}
+                onChange={(e) => setForm((f) => ({ ...f, is_recurring: e.target.checked }))}
+                className="sr-only peer"
+              />
+              <div className="w-11 h-6 bg-gray-200 dark:bg-[#333] rounded-full peer-checked:bg-primary-500 transition-colors"></div>
+              <div className="absolute left-0.5 top-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform peer-checked:translate-x-5"></div>
+            </div>
+            <span className="text-sm font-medium text-gray-700 dark:text-gray-300">🔄 {t('addIncome.isRecurring')}</span>
           </label>
 
           {form.is_recurring && (
-            <div className="animate-slide-up">
-              <label htmlFor="recurring_frequency" className="label">{t('addIncome.frequency')}</label>
-              <select
-                id="recurring_frequency"
-                name="recurring_frequency"
-                value={form.recurring_frequency}
-                onChange={handleChange}
-                className="input"
-              >
-                <option value="weekly">{t('addIncome.weekly')}</option>
-                <option value="monthly">{t('addIncome.monthly')}</option>
-                <option value="yearly">{t('addIncome.yearly')}</option>
-              </select>
+            <div className="space-y-3 animate-slide-up pl-1 border-l-2 border-primary-200 dark:border-primary-800 ml-2">
+              <div className="pl-3">
+                <label htmlFor="recurring_frequency" className="label">{t('addIncome.frequency')}</label>
+                <select
+                  id="recurring_frequency"
+                  name="recurring_frequency"
+                  value={form.recurring_frequency}
+                  onChange={handleChange}
+                  className="input"
+                >
+                  <option value="weekly">{t('addIncome.weekly')}</option>
+                  <option value="biweekly">{t('addIncome.biweekly')}</option>
+                  <option value="monthly">{t('addIncome.monthly')}</option>
+                  <option value="quarterly">{t('addIncome.quarterly')}</option>
+                  <option value="yearly">{t('addIncome.yearly')}</option>
+                </select>
+              </div>
+              <div className="pl-3">
+                <label htmlFor="recurring_start_date" className="label">{t('addIncome.startDate')}</label>
+                <input
+                  id="recurring_start_date"
+                  name="recurring_start_date"
+                  type="date"
+                  value={form.recurring_start_date}
+                  onChange={handleChange}
+                  className="input"
+                />
+              </div>
+              {nextDate && (
+                <p className="pl-3 text-sm text-primary-600 dark:text-primary-400 font-medium">
+                  📅 {t('addIncome.nextPreview')}: {formatPreviewDate(nextDate, language)}
+                </p>
+              )}
             </div>
           )}
         </div>
