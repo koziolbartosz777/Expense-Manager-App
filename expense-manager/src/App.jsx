@@ -7,6 +7,7 @@ import AddExpensePage from './pages/AddExpensePage'
 import IncomePage from './pages/IncomePage'
 import AddIncomePage from './pages/AddIncomePage'
 import AnalyticsPage from './pages/AnalyticsPage'
+import CalendarPage from './pages/CalendarPage'
 import BudgetPage from './pages/BudgetPage'
 import SettingsPage from './pages/SettingsPage'
 import LoginPage from './pages/LoginPage'
@@ -70,6 +71,7 @@ export default function App() {
           <Route path="/add" element={<AddExpensePage />} />
           <Route path="/income" element={<IncomePage />} />
           <Route path="/add-income" element={<AddIncomePage />} />
+          <Route path="/calendar" element={<CalendarPage />} />
           <Route path="/analytics" element={<AnalyticsPage />} />
           <Route path="/budget" element={<BudgetPage />} />
           <Route path="/settings" element={<SettingsPage />} />

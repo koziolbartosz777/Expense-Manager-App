@@ -21,11 +21,18 @@ export const useCategoryStore = create((set, get) => ({
   categories: [],
   isLoading: false,
   error: null,
+  _seeded: false, // flaga — czy sprawdzono/seedowano w tej sesji
 
   // ─── Pobieranie kategorii użytkownika ───
   fetchCategories: async () => {
     const user = useAuthStore.getState().user
     if (!user) return
+
+    // Sprawdź seedowanie PRZED fetch — ale tylko raz na sesję
+    if (!get()._seeded) {
+      set({ _seeded: true })
+      await get().seedDefaults()
+    }
 
     set({ isLoading: true, error: null })
     try {
@@ -36,14 +43,7 @@ export const useCategoryStore = create((set, get) => ({
         .order('created_at', { ascending: true })
 
       if (error) throw error
-
-      // Jeśli brak kategorii — seeduj domyślne
-      if (!data || data.length === 0) {
-        await get().seedDefaults()
-        return
-      }
-
-      set({ categories: data, isLoading: false })
+      set({ categories: data || [], isLoading: false })
     } catch (error) {
       set({ error: error.message, isLoading: false })
     }
@@ -55,21 +55,28 @@ export const useCategoryStore = create((set, get) => ({
     if (!user) return
 
     try {
+      // Sprawdź COUNT — seeduj TYLKO gdy 0 kategorii w DB
+      const { count, error: countError } = await supabase
+        .from('categories')
+        .select('*', { count: 'exact', head: true })
+        .eq('user_id', user.id)
+
+      if (countError) throw countError
+      if (count > 0) return // użytkownik ma już kategorie — nie seeduj
+
       const rows = DEFAULT_SEED.map((cat) => ({
         ...cat,
         user_id: user.id,
         is_default: true,
       }))
 
-      const { data, error } = await supabase
+      const { error } = await supabase
         .from('categories')
         .insert(rows)
-        .select()
 
       if (error) throw error
-      set({ categories: data || [], isLoading: false })
     } catch (error) {
-      set({ error: error.message, isLoading: false })
+      console.error('Seed defaults error:', error)
     }
   },
 

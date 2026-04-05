@@ -6,6 +6,7 @@ import { useTranslation } from '../hooks/useTranslation'
 import { formatAmount, formatDate } from '../lib/utils'
 import { translateCategory } from '../lib/categories'
 import { subMonths, startOfMonth, endOfMonth, startOfYear, isWithinInterval, parseISO } from 'date-fns'
+import { calculateSafeToSpend } from '../lib/safeToSpend'
 
 const PERIOD_KEYS = ['month', '3months', '6months', 'year', 'all']
 
@@ -119,6 +120,9 @@ export default function DashboardPage() {
         )}
       </div>
 
+      {/* Safe-to-spend widget */}
+      <SafeToSpendWidget expenses={expenses} budgets={budgets} t={t} formatAmount={formatAmount} />
+
       <div className="card">
         <div className="flex items-center justify-between mb-4">
           <h2 className="section-title">{t('dashboard.recentExpenses')}</h2>
@@ -148,6 +152,34 @@ export default function DashboardPage() {
           </div>
         )}
       </div>
+    </div>
+  )
+}
+
+function SafeToSpendWidget({ expenses, budgets, t, formatAmount }) {
+  const result = calculateSafeToSpend({ expenses, budgets, today: new Date() })
+  if (!result) return null
+
+  const { safeToSpend, budgetRemaining, daysRemaining } = result
+  const isOver = budgetRemaining < 0
+
+  return (
+    <div className="card border-l-4 border-l-indigo-500">
+      <p className="text-sm text-gray-500 mb-1">💡 {t('dashboard.safeToSpend')}</p>
+      <p className={`text-3xl font-bold ${safeToSpend >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+        {formatAmount(Math.abs(safeToSpend))} <span className="text-base font-normal text-gray-400">/ {t('dashboard.perDay')}</span>
+      </p>
+      {isOver ? (
+        <p className="text-sm text-red-600 dark:text-red-400 mt-2 font-medium">
+          ⚠️ {t('dashboard.budgetExceeded').replace('{amount}', formatAmount(Math.abs(budgetRemaining)))}
+        </p>
+      ) : (
+        <p className="text-sm text-gray-500 mt-2">
+          {t('dashboard.budgetRemaining')
+            .replace('{amount}', formatAmount(budgetRemaining))
+            .replace('{days}', String(daysRemaining))}
+        </p>
+      )}
     </div>
   )
 }

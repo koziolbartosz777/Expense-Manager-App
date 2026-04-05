@@ -123,6 +123,54 @@ export default function AnalyticsPage() {
           </ResponsiveContainer>
         )}
       </div>
+
+      {/* Potrzeby vs Zachcianki */}
+      <NeedsVsWantsCard filtered={filtered} t={t} formatAmount={formatAmount} />
+    </div>
+  )
+}
+
+function NeedsVsWantsCard({ filtered, t, formatAmount }) {
+  const needs = filtered.filter((e) => !e.is_want)
+  const wants = filtered.filter((e) => e.is_want)
+  const needsTotal = needs.reduce((s, e) => s + Number(e.amount), 0)
+  const wantsTotal = wants.reduce((s, e) => s + Number(e.amount), 0)
+  const total = needsTotal + wantsTotal
+  const needsPct = total > 0 ? Math.round((needsTotal / total) * 100) : 0
+  const wantsPct = total > 0 ? 100 - needsPct : 0
+
+  if (total === 0) return null
+
+  return (
+    <div className="card">
+      <h2 className="section-title mb-4">{t('analytics.needsVsWants')}</h2>
+
+      <div className="grid grid-cols-2 gap-4 mb-4">
+        <div className="text-center">
+          <p className="text-xs text-gray-500 mb-1">✅ {t('analytics.needs')}</p>
+          <p className="text-xl font-bold text-green-600">{formatAmount(needsTotal)}</p>
+          <p className="text-xs text-gray-400">{needsPct}%</p>
+        </div>
+        <div className="text-center">
+          <p className="text-xs text-gray-500 mb-1">🛍️ {t('analytics.wants')}</p>
+          <p className="text-xl font-bold text-orange-600">{formatAmount(wantsTotal)}</p>
+          <p className="text-xs text-gray-400">{wantsPct}%</p>
+        </div>
+      </div>
+
+      {/* Stacked bar */}
+      <div className="w-full h-4 bg-gray-100 dark:bg-[#222] rounded-full overflow-hidden flex">
+        <div className="h-full bg-green-500 transition-all duration-500" style={{ width: `${needsPct}%` }} />
+        <div className="h-full bg-orange-500 transition-all duration-500" style={{ width: `${wantsPct}%` }} />
+      </div>
+
+      {wantsTotal > 0 && (
+        <p className="text-sm text-gray-500 mt-3">
+          {t('analytics.wantsSummary')
+            .replace('{amount}', formatAmount(wantsTotal))
+            .replace('{percent}', String(wantsPct))}
+        </p>
+      )}
     </div>
   )
 }

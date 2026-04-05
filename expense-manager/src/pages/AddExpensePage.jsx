@@ -6,9 +6,6 @@ import { useTranslation } from '../hooks/useTranslation'
 import { parseAmount } from '../lib/utils'
 import { translateCategory } from '../lib/categories'
 
-/**
- * Oblicza recurring_next_date na podstawie daty i częstotliwości.
- */
 function calcNextDate(dateStr, frequency) {
   const d = new Date(dateStr)
   switch (frequency) {
@@ -40,9 +37,8 @@ export default function AddExpensePage() {
   const isLoading = useExpenseStore((s) => s.isLoading)
   const { categories, fetchCategories } = useCategoryStore()
 
-  // value = zawsze polski (do zapisu w DB), label = tłumaczony (do wyświetlania)
   const categoryOptions = categories.map((c) => {
-    const value = `${c.icon} ${c.name}` // DB value (polski)
+    const value = `${c.icon} ${c.name}`
     return { value, label: translateCategory(value, language) }
   })
 
@@ -57,10 +53,10 @@ export default function AddExpensePage() {
     is_recurring: false,
     recurring_frequency: 'monthly',
     recurring_start_date: new Date().toISOString().split('T')[0],
+    is_want: false,
   })
   const [error, setError] = useState('')
 
-  // Ustaw domyślną kategorię (polski value)
   useEffect(() => {
     if (categoryOptions.length > 0 && !form.category && !isEditMode) {
       setForm((f) => ({ ...f, category: categoryOptions[0].value }))
@@ -76,6 +72,7 @@ export default function AddExpensePage() {
       is_recurring: editingExpense.is_recurring || false,
       recurring_frequency: editingExpense.recurring_frequency || 'monthly',
       recurring_start_date: editingExpense.date,
+      is_want: editingExpense.is_want || false,
     })
   }, [editingExpense])
 
@@ -90,12 +87,12 @@ export default function AddExpensePage() {
     e.preventDefault(); setError('')
     const amount = parseAmount(form.amount)
     if (!amount || amount <= 0) { setError(t('addExpense.invalidAmount')); return }
-    // category jest zawsze polskim value — bezpiecznie do DB
     const payload = {
       amount, category: form.category, description: form.description, date: form.date,
       is_recurring: form.is_recurring,
       recurring_frequency: form.is_recurring ? form.recurring_frequency : null,
       recurring_next_date: form.is_recurring ? calcNextDate(form.recurring_start_date, form.recurring_frequency) : null,
+      is_want: form.is_want,
     }
     const result = isEditMode ? await updateExpense(editId, payload) : await addExpense(payload)
     if (result) navigate('/expenses')
@@ -126,16 +123,32 @@ export default function AddExpensePage() {
         <div><label htmlFor="date" className="label">{t('addExpense.date')}</label>
           <input id="date" name="date" type="date" value={form.date} onChange={handleChange} className="input" required /></div>
 
+        {/* Potrzeba vs Zachcianka */}
+        <div>
+          <label className="label">{t('addExpense.needOrWant')}</label>
+          <div className="flex gap-2">
+            <button
+              type="button"
+              onClick={() => setForm((f) => ({ ...f, is_want: false }))}
+              className={`flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium transition-all min-h-[44px] border-2 ${!form.is_want ? 'bg-green-50 text-green-700 border-green-300 dark:bg-green-900/20 dark:text-green-400 dark:border-green-700' : 'bg-gray-50 text-gray-500 border-gray-200 dark:bg-[#1a1a1a] dark:text-gray-400 dark:border-[#333] hover:bg-gray-100'}`}
+            >
+              ✅ {t('addExpense.need')}
+            </button>
+            <button
+              type="button"
+              onClick={() => setForm((f) => ({ ...f, is_want: true }))}
+              className={`flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium transition-all min-h-[44px] border-2 ${form.is_want ? 'bg-orange-50 text-orange-700 border-orange-300 dark:bg-orange-900/20 dark:text-orange-400 dark:border-orange-700' : 'bg-gray-50 text-gray-500 border-gray-200 dark:bg-[#1a1a1a] dark:text-gray-400 dark:border-[#333] hover:bg-gray-100'}`}
+            >
+              🛍️ {t('addExpense.want')}
+            </button>
+          </div>
+        </div>
+
         {/* Wydatek cykliczny */}
         <div className="space-y-3">
           <label className="flex items-center gap-3 cursor-pointer min-h-[44px]">
             <div className="relative">
-              <input
-                type="checkbox"
-                checked={form.is_recurring}
-                onChange={(e) => setForm((f) => ({ ...f, is_recurring: e.target.checked }))}
-                className="sr-only peer"
-              />
+              <input type="checkbox" checked={form.is_recurring} onChange={(e) => setForm((f) => ({ ...f, is_recurring: e.target.checked }))} className="sr-only peer" />
               <div className="w-11 h-6 bg-gray-200 dark:bg-[#333] rounded-full peer-checked:bg-primary-500 transition-colors"></div>
               <div className="absolute left-0.5 top-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform peer-checked:translate-x-5"></div>
             </div>
@@ -146,13 +159,7 @@ export default function AddExpensePage() {
             <div className="space-y-3 animate-slide-up pl-1 border-l-2 border-primary-200 dark:border-primary-800 ml-2">
               <div className="pl-3">
                 <label htmlFor="recurring_frequency" className="label">{t('addExpense.frequency')}</label>
-                <select
-                  id="recurring_frequency"
-                  name="recurring_frequency"
-                  value={form.recurring_frequency}
-                  onChange={handleChange}
-                  className="input"
-                >
+                <select id="recurring_frequency" name="recurring_frequency" value={form.recurring_frequency} onChange={handleChange} className="input">
                   <option value="weekly">{t('addExpense.weekly')}</option>
                   <option value="biweekly">{t('addExpense.biweekly')}</option>
                   <option value="monthly">{t('addExpense.monthly')}</option>
@@ -162,14 +169,7 @@ export default function AddExpensePage() {
               </div>
               <div className="pl-3">
                 <label htmlFor="recurring_start_date" className="label">{t('addExpense.startDate')}</label>
-                <input
-                  id="recurring_start_date"
-                  name="recurring_start_date"
-                  type="date"
-                  value={form.recurring_start_date}
-                  onChange={handleChange}
-                  className="input"
-                />
+                <input id="recurring_start_date" name="recurring_start_date" type="date" value={form.recurring_start_date} onChange={handleChange} className="input" />
               </div>
               {nextDate && (
                 <p className="pl-3 text-sm text-primary-600 dark:text-primary-400 font-medium">

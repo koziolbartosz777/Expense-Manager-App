@@ -6,6 +6,8 @@ import { useLanguageStore } from '../store/useLanguageStore'
 import { useTranslation } from '../hooks/useTranslation'
 import { translateCategory } from '../lib/categories'
 import ConfirmModal from '../components/ui/Modal'
+import Picker from '@emoji-mart/react'
+import data from '@emoji-mart/data'
 
 const PRESET_COLORS = [
   { value: '#6366f1', label: 'Indigo' },
@@ -16,12 +18,6 @@ const PRESET_COLORS = [
   { value: '#14b8a6', label: 'Teal' },
   { value: '#ef4444', label: 'Red' },
   { value: '#3b82f6', label: 'Blue' },
-]
-
-const EMOJI_QUICK_PICK = [
-  '🍕','🍺','🎵','🏋️','🐕','🌿','🎨','🎯','🏖️','🎪',
-  '🚀','🎭','🎬','🎤','🎸','🎹','🏆','🥇','🎲','♟️',
-  '🌍','🌙','⭐','🔥','💎','👑','🦋','🌸','🍀','🎋',
 ]
 
 const LANGS = [
@@ -46,8 +42,26 @@ export default function SettingsPage() {
   const [form, setForm] = useState(emptyForm)
   const [formError, setFormError] = useState('')
   const [editForm, setEditForm] = useState({ name: '', icon: '' })
+  const [showPicker, setShowPicker] = useState(false)
 
   useEffect(() => { fetchCategories() }, []) // eslint-disable-line
+
+  useEffect(() => {
+    if (!showPicker) return
+    const handler = (e) => {
+      // Ignore clicks on the toggle button itself and inside the picker
+      if (e.target.closest('#emoji-toggle-btn') || e.target.closest('em-emoji-picker')) return
+      setShowPicker(false)
+    }
+    // Use setTimeout so this handler doesn't fire on the same click that opened the picker
+    const timer = setTimeout(() => {
+      document.addEventListener('mousedown', handler)
+    }, 10)
+    return () => {
+      clearTimeout(timer)
+      document.removeEventListener('mousedown', handler)
+    }
+  }, [showPicker])
 
   const handleAdd = async (e) => {
     e.preventDefault(); setFormError('')
@@ -56,7 +70,7 @@ export default function SettingsPage() {
     const fullName = `${form.icon} ${form.name}`
     if (categories.some((c) => `${c.icon} ${c.name}` === fullName)) { setFormError(t('settings.duplicateCategory')); return }
     const result = await addCategory({ name: form.name.trim(), icon: form.icon || '📌', color: form.color })
-    if (result) { setForm(emptyForm); setShowAddForm(false) }
+    if (result) { setForm(emptyForm); setShowAddForm(false); setShowPicker(false) }
   }
 
   const startEdit = (cat) => { setEditingId(cat.id); setEditForm({ name: cat.name, icon: cat.icon }) }
@@ -97,7 +111,7 @@ export default function SettingsPage() {
       <div className="card space-y-4">
         <div className="flex items-center justify-between">
           <h2 className="section-title">{t('settings.categories')}</h2>
-          <button onClick={() => { setShowAddForm(!showAddForm); setFormError('') }} className="text-sm text-primary-500 hover:text-primary-700 font-medium min-h-[44px] flex items-center">
+          <button onClick={() => { setShowAddForm(!showAddForm); setFormError(''); setShowPicker(false) }} className="text-sm text-primary-500 hover:text-primary-700 font-medium min-h-[44px] flex items-center">
             {showAddForm ? t('settings.cancelAdd') : t('settings.addCategory')}
           </button>
         </div>
@@ -106,28 +120,34 @@ export default function SettingsPage() {
           <form onSubmit={handleAdd} className="space-y-4 p-4 bg-gray-50 dark:bg-[#1a1a1a] rounded-xl animate-slide-up">
             {formError && <p className="text-sm text-red-500">{formError}</p>}
 
-            {/* Emoji preview + input */}
-            <div className="flex items-center gap-4">
-              <div className="w-16 h-16 bg-white dark:bg-[#222] rounded-2xl border-2 border-gray-200 dark:border-[#333] flex items-center justify-center shadow-sm">
-                <span style={{ fontSize: '2rem' }}>{form.icon || '📌'}</span>
-              </div>
-              <div className="flex-1">
-                <label className="label text-xs">{t('settings.emojiPreview')}</label>
-                <input type="text" placeholder="📌" value={form.icon} onChange={(e) => setForm((f) => ({ ...f, icon: e.target.value }))} className="input text-center text-xl" maxLength={4} />
-              </div>
-            </div>
-
-            {/* Emoji quick-pick grid */}
+            {/* Emoji preview + picker toggle */}
             <div>
-              <label className="label text-xs">{t('settings.quickPick')}</label>
-              <div className="grid grid-cols-10 gap-1">
-                {EMOJI_QUICK_PICK.map((emoji) => (
-                  <button key={emoji} type="button" onClick={() => setForm((f) => ({ ...f, icon: emoji }))}
-                    className={`w-9 h-9 flex items-center justify-center rounded-lg text-lg transition-all hover:bg-gray-200 dark:hover:bg-[#333] ${form.icon === emoji ? 'bg-primary-100 dark:bg-primary-900/30 ring-2 ring-primary-500 scale-110' : 'bg-white dark:bg-[#222]'}`}>
-                    {emoji}
-                  </button>
-                ))}
+              <div className="flex items-center gap-3 mb-2">
+                <button
+                  id="emoji-toggle-btn"
+                  type="button"
+                  onClick={() => setShowPicker((p) => !p)}
+                  style={{ fontSize: '2rem', padding: '8px', borderRadius: '12px' }}
+                  className="bg-white dark:bg-[#222] border-2 border-gray-200 dark:border-[#333] hover:border-primary-400 dark:hover:border-primary-600 transition-colors cursor-pointer"
+                >
+                  {form.icon || '📌'}
+                </button>
+                <span className="text-sm text-gray-500">{t('settings.quickPick')}</span>
               </div>
+
+              {/* emoji-mart Picker */}
+              {showPicker && (
+                <div style={{ position: 'relative', zIndex: 50 }}>
+                  <Picker
+                    data={data}
+                    onEmojiSelect={(e) => { setForm((f) => ({ ...f, icon: e.native })); setShowPicker(false) }}
+                    locale={language}
+                    theme={theme === 'dark' ? 'dark' : 'light'}
+                    previewPosition="none"
+                    skinTonePosition="none"
+                  />
+                </div>
+              )}
             </div>
 
             {/* Category name */}

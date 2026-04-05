@@ -150,6 +150,11 @@ export default function ExpensesPage() {
                       🔄 {t(FREQ_LABELS[expense.recurring_frequency] || 'expenses.recurring')}
                     </span>
                   )}
+                  {expense.is_want && (
+                    <span className="text-xs bg-orange-50 text-orange-600 dark:bg-orange-900/20 dark:text-orange-400 px-2 py-0.5 rounded-full font-medium">
+                      🛍️
+                    </span>
+                  )}
                 </div>
                 {expense.description && <p className="text-sm text-gray-500 truncate mt-0.5">{expense.description}</p>}
               </div>

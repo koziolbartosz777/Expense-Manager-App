@@ -8,8 +8,8 @@ const NAV_ITEMS = [
   { to: '/expenses', key: 'expenses', icon: '📋', hasBadge: true },
   { to: '/income', key: 'income', icon: '💰' },
   { to: '/add', icon: '+', isAdd: true },
+  { to: '/calendar', key: 'calendar', icon: '📅' },
   { to: '/analytics', key: 'analytics', icon: '📊' },
-  { to: '/settings', key: 'settings', icon: '⚙️' },
 ]
 
 export default function BottomNav() {
